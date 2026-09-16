@@ -15,6 +15,8 @@ export default function App() {
   const [selectedTest, setSelectedTest] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [feedback, setFeedback] = useState(null);
+  // feedback = { isCorrect: boolean, selected: "A"|"B"|"C"|"D" }
 
   const currentQuestion = selectedTest?.questions[currentIndex];
   const totalQuestions = selectedTest?.questions.length || 0;
@@ -40,34 +42,44 @@ export default function App() {
     setSelectedTest(test);
     setCurrentIndex(0);
     setAnswers({});
+    setFeedback(null);
     setScreen("quiz");
   };
 
   const chooseAnswer = (answer) => {
     if (!currentQuestion) return;
 
+    const isCorrect = answer === currentQuestion.correctAnswer;
+
     setAnswers((prev) => ({
       ...prev,
       [currentQuestion.id]: answer,
     }));
+
+    setFeedback({
+      isCorrect,
+      selected: answer,
+    });
   };
 
   const goNext = () => {
     if (!selectedTest) return;
-
     if (currentIndex < selectedTest.questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
+      setFeedback(null);
     }
   };
 
   const goPrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
+      setFeedback(null);
     }
   };
 
   const goToQuestion = (index) => {
     setCurrentIndex(index);
+    setFeedback(null);
   };
 
   const finishTest = () => {
@@ -78,8 +90,8 @@ export default function App() {
     const confirmFinish =
       unanswered > 0
         ? window.confirm(
-            `Masih ada ${unanswered} soal yang belum dijawab. Tetap selesai?`
-          )
+          `Masih ada ${unanswered} soal yang belum dijawab. Tetap selesai?`
+        )
         : true;
 
     if (confirmFinish) {
@@ -92,11 +104,13 @@ export default function App() {
     setSelectedTest(null);
     setCurrentIndex(0);
     setAnswers({});
+    setFeedback(null);
   };
 
   const retryTest = () => {
     setCurrentIndex(0);
     setAnswers({});
+    setFeedback(null);
     setScreen("quiz");
   };
 
@@ -138,10 +152,6 @@ export default function App() {
               </button>
             ))}
           </div>
-
-          <p className="mt-8 text-center text-sm text-slate-500">
-            Website ini hanya menampilkan opsi jawaban A, B, C, dan D.
-          </p>
         </section>
       </main>
     );
@@ -149,9 +159,8 @@ export default function App() {
 
   if (screen === "quiz" && selectedTest && currentQuestion) {
     const selectedAnswer = answers[currentQuestion.id];
-    const progressPercentage = Math.round(
-      (answeredCount / totalQuestions) * 100
-    );
+    const progressPercentage = Math.round((answeredCount / totalQuestions) * 100);
+    const showFeedback = feedback && selectedAnswer;
 
     return (
       <main className="min-h-screen bg-slate-50">
@@ -205,7 +214,14 @@ export default function App() {
               </div>
 
               {selectedAnswer && (
-                <span className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700">
+                <span
+                  className={[
+                    "rounded-full px-4 py-2 text-sm font-bold",
+                    feedback?.isCorrect
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-rose-100 text-rose-700",
+                  ].join(" ")}
+                >
                   Terjawab: {selectedAnswer}
                 </span>
               )}
@@ -214,24 +230,46 @@ export default function App() {
             <div className="space-y-3">
               {answerKeys.map((key) => {
                 const isSelected = selectedAnswer === key;
+                const isCorrect = currentQuestion.correctAnswer === key;
+
+                let buttonClass =
+                  "flex w-full items-start gap-4 rounded-2xl border p-4 text-left transition";
+
+                if (showFeedback) {
+                  if (isCorrect) {
+                    buttonClass +=
+                      " border-emerald-500 bg-emerald-50 ring-2 ring-emerald-100";
+                  } else if (isSelected && !feedback.isCorrect) {
+                    buttonClass +=
+                      " border-rose-500 bg-rose-50 ring-2 ring-rose-100";
+                  } else {
+                    buttonClass += " border-slate-200 bg-white opacity-70";
+                  }
+                } else {
+                  buttonClass +=
+                    isSelected
+                      ? " border-blue-500 bg-blue-50 ring-2 ring-blue-100"
+                      : " border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50";
+                }
 
                 return (
                   <button
                     key={key}
                     onClick={() => chooseAnswer(key)}
-                    className={[
-                      "flex w-full items-start gap-4 rounded-2xl border p-4 text-left transition",
-                      isSelected
-                        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-100"
-                        : "border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50",
-                    ].join(" ")}
+                    className={buttonClass}
                   >
                     <span
                       className={[
                         "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold",
-                        isSelected
-                          ? "bg-blue-600 text-white"
-                          : "bg-slate-100 text-slate-700",
+                        showFeedback
+                          ? isCorrect
+                            ? "bg-emerald-600 text-white"
+                            : isSelected && !feedback.isCorrect
+                              ? "bg-rose-600 text-white"
+                              : "bg-slate-100 text-slate-500"
+                          : isSelected
+                            ? "bg-blue-600 text-white"
+                            : "bg-slate-100 text-slate-700",
                       ].join(" ")}
                     >
                       {key}
@@ -244,6 +282,31 @@ export default function App() {
               })}
             </div>
 
+            {showFeedback && (
+              <div
+                className={[
+                  "mt-6 rounded-2xl p-4 text-sm font-medium",
+                  feedback.isCorrect
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-rose-50 text-rose-700",
+                ].join(" ")}
+              >
+                {feedback.isCorrect ? (
+                  <p>Benar. Jawaban kamu sudah tepat.</p>
+                ) : (
+                  <div className="space-y-1">
+                    <p>
+                      Salah. Jawaban kamu: <b>{selectedAnswer}</b>
+                    </p>
+                    <p>
+                      Jawaban benar:{" "}
+                      <b>{currentQuestion.correctAnswer}</b>
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <button
                 onClick={goPrevious}
@@ -254,23 +317,25 @@ export default function App() {
                 Sebelumnya
               </button>
 
-              {currentIndex < totalQuestions - 1 ? (
-                <button
-                  onClick={goNext}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
-                >
-                  Berikutnya
-                  <ChevronRight size={18} />
-                </button>
-              ) : (
-                <button
-                  onClick={finishTest}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700"
-                >
-                  Selesai Test
-                  <CheckCircle2 size={18} />
-                </button>
-              )}
+              <div className="flex gap-3">
+                {currentIndex < totalQuestions - 1 ? (
+                  <button
+                    onClick={goNext}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
+                  >
+                    Berikutnya
+                    <ChevronRight size={18} />
+                  </button>
+                ) : (
+                  <button
+                    onClick={finishTest}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700"
+                  >
+                    Selesai Test
+                    <CheckCircle2 size={18} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -294,33 +359,14 @@ export default function App() {
                       isActive
                         ? "bg-blue-600 text-white"
                         : isAnswered
-                        ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200",
+                          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200",
                     ].join(" ")}
                   >
                     {question.id}
                   </button>
                 );
               })}
-            </div>
-
-            <div className="mt-6 space-y-3 rounded-2xl bg-slate-50 p-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Total Soal</span>
-                <span className="font-bold text-slate-900">{totalQuestions}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Sudah Dijawab</span>
-                <span className="font-bold text-emerald-600">
-                  {answeredCount}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Belum Dijawab</span>
-                <span className="font-bold text-rose-600">
-                  {totalQuestions - answeredCount}
-                </span>
-              </div>
             </div>
 
             <button
@@ -407,7 +453,6 @@ export default function App() {
                         <h3 className="font-bold text-slate-900">
                           Soal {question.id}
                         </h3>
-
                         {!userAnswer && (
                           <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-600">
                             Tidak dijawab
@@ -432,8 +477,7 @@ export default function App() {
                             Jawaban benar
                           </p>
                           <p className="mt-2 text-sm text-slate-800">
-                            {question.correctAnswer}.{" "}
-                            {question.options[question.correctAnswer]}
+                            {question.correctAnswer}. {question.options[question.correctAnswer]}
                           </p>
                         </div>
                       </div>
