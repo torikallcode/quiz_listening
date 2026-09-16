@@ -46,7 +46,7 @@ export const testsData = [
       { id: 4, options: { A: "It's just past ten o'clock.", B: "There is no time to talk.", C: "She needs a little more time.", D: "She has more than ten exams." }, correctAnswer: "A" },
       { id: 5, options: { A: "She appreciates the man's help.", B: "Her presentation was somewhat long.", C: "She needed more time to prepare.", D: "She worked hard on her presentation." }, correctAnswer: "D" },
       { id: 6, options: { A: "She wants to exercise before she runs.", B: "It's too hot to go running.", C: "Her jogging suit isn't warm enough.", D: "She already went jogging." }, correctAnswer: "A" },
-      { id: 7, options: { A: "To tell him they are busy.", B: "To cancel an appointment.", C: "To invite him to go to a film.", D: "To ask him a question about homework." }, correctAnswer: "C" },
+      { id: 7, options: { A: "To tell him they are busy.", B: "To cancel an appointment.", C: "To invite him to go to a film.", D: "To ask him a question about homework." }, correctAnswer: "D" },
       { id: 8, options: { A: "Keep looking for his wallet.", B: "Report the theft of the wallet right away.", C: "Put his wallet in his jacket pocket.", D: "Be more careful with his wallet." }, correctAnswer: "A" },
       { id: 9, options: { A: "She is on a special diet.", B: "She doesn't like to walk to the cafeteria.", C: "She thinks the cafeteria is too expensive.", D: "She doesn't eat lunch anymore." }, correctAnswer: "C" },
       { id: 10, options: { A: "The man should look into buying a new car.", B: "The car looks better than it used to.", C: "The man should fly to Florida.", D: "The man should get his car checked." }, correctAnswer: "D" },
